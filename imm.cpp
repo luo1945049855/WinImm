@@ -1,248 +1,277 @@
 #include "UIWnd.h"
 #include <TCHAR.H>
 #include "ImcHandle.h"
-#include "Comp.h"
+#include "CompositionStringEx.h"
 
-BOOL WINAPI ImeInquire(LPIMEINFO lpImeInfo, LPTSTR lpszUIClass, LPCTSTR lpszOptions)
-{
-  // Èç¹ûËÞÖ÷½ø³ÌÎªWinlogon£¬ÔòÖ±½ÓÍË³ö
-	if((DWORD_PTR)lpszOptions & IME_SYSINFO_WINLOGON )
-		return FALSE;
+BOOL WINAPI ImeInquire(LPIMEINFO lpImeInfo,
+                       LPTSTR lpszUIClass,
+                       LPCTSTR lpszOptions) {
+  // å¦‚æžœå®¿ä¸»è¿›ç¨‹ä¸ºWinlogonï¼Œåˆ™ç›´æŽ¥é€€å‡º
+  if ((DWORD_PTR)lpszOptions & IME_SYSINFO_WINLOGON)
+    return FALSE;
 
-  lpImeInfo->dwPrivateDataSize	= 0; //sizeof(t_uiExtra);
+  lpImeInfo->dwPrivateDataSize = 0;  // sizeof(t_uiExtra);
 
-  lpImeInfo->fdwProperty  = IME_PROP_COMPLETE_ON_UNSELECT | 
-    IME_PROP_SPECIAL_UI | IME_PROP_CANDLIST_START_FROM_1 |
-    IME_PROP_UNICODE | IME_PROP_KBD_CHAR_FIRST;                 // ÊäÈë·¨ÊôÐÔ
+  lpImeInfo->fdwProperty = IME_PROP_COMPLETE_ON_UNSELECT | IME_PROP_SPECIAL_UI |
+                           IME_PROP_CANDLIST_START_FROM_1 | IME_PROP_UNICODE |
+                           IME_PROP_KBD_CHAR_FIRST;  // è¾“å…¥æ³•å±žæ€§
 
-  lpImeInfo->fdwConversionCaps  = IME_CMODE_SYMBOL | 
-    IME_CMODE_SOFTKBD | IME_CMODE_FULLSHAPE;                    // ×ª»»Ä£Ê½
-	lpImeInfo->fdwSentenceCaps    = IME_SMODE_NONE;               // ¾ä×ÓÄ£Ê½
-	lpImeInfo->fdwUICaps          = UI_CAP_SOFTKBD| UI_CAP_2700;  // UI±ê¼Ç
-	lpImeInfo->fdwSCSCaps					= 0x00000000;
-	lpImeInfo->fdwSelectCaps			= 0x00000000;
+  lpImeInfo->fdwConversionCaps =
+      IME_CMODE_SYMBOL | IME_CMODE_SOFTKBD | IME_CMODE_FULLSHAPE;  // è½¬æ¢æ¨¡å¼
+  lpImeInfo->fdwSentenceCaps = IME_SMODE_NONE;          // å¥å­æ¨¡å¼
+  lpImeInfo->fdwUICaps = UI_CAP_SOFTKBD | UI_CAP_2700;  // UIæ ‡è®°
+  lpImeInfo->fdwSCSCaps = 0x00000000;
+  lpImeInfo->fdwSelectCaps = 0x00000000;
 
-  // ´°ÌåÀàÃû
+  // çª—ä½“ç±»å
   _tcscpy_s(lpszUIClass, MAX_CLASSNAME_UI, UIWnd::GetUIWndClassName());
 
-	return TRUE;
+  return TRUE;
 }
 
-BOOL WINAPI ImeConfigure(HKL hkl, HWND hWnd, DWORD dwMode, LPVOID lpData)
-{
-	// exec config
-	return TRUE;
+BOOL WINAPI ImeConfigure(HKL hkl, HWND hWnd, DWORD dwMode, LPVOID lpData) {
+  // exec config
+  return TRUE;
 }
 
-LRESULT WINAPI ImeEscape(HIMC hImc, UINT nSub, LPVOID lpData)
-{
-	switch (nSub)
-	{
-	case IME_ESC_QUERY_SUPPORT:
-	case IME_ESC_RESERVED_LAST:             
-	case IME_ESC_RESERVED_FIRST:            
-	case IME_ESC_PRIVATE_FIRST:             
-	case IME_ESC_PRIVATE_LAST:              
-	case IME_ESC_SEQUENCE_TO_INTERNAL:
-	case IME_ESC_GET_EUDC_DICTIONARY:
-	case IME_ESC_SET_EUDC_DICTIONARY:
-	case IME_ESC_MAX_KEY:
-	case IME_ESC_SYNC_HOTKEY:
-	case IME_ESC_HANJA_MODE:
-	case IME_ESC_GETHELPFILENAME:
-	case IME_ESC_PRIVATE_HOTKEY:
-		break; //not support
-	case IME_ESC_IME_NAME:
-		{
-			LPTSTR szData = (LPTSTR)lpData;
-			_tcscpy_s(szData, 16, _T("XXIme")); //for win98: less than 16*sizeof(TCHAR)
-			return TRUE;
-		}
-		break;            
-	}
-	return FALSE;
+LRESULT WINAPI ImeEscape(HIMC hImc, UINT nSub, LPVOID lpData) {
+  switch (nSub) {
+    case IME_ESC_QUERY_SUPPORT:
+    case IME_ESC_RESERVED_LAST:
+    case IME_ESC_RESERVED_FIRST:
+    case IME_ESC_PRIVATE_FIRST:
+    case IME_ESC_PRIVATE_LAST:
+    case IME_ESC_SEQUENCE_TO_INTERNAL:
+    case IME_ESC_GET_EUDC_DICTIONARY:
+    case IME_ESC_SET_EUDC_DICTIONARY:
+    case IME_ESC_MAX_KEY:
+    case IME_ESC_SYNC_HOTKEY:
+    case IME_ESC_HANJA_MODE:
+    case IME_ESC_GETHELPFILENAME:
+    case IME_ESC_PRIVATE_HOTKEY:
+      break;  // not support
+    case IME_ESC_IME_NAME: {
+      LPTSTR szData = (LPTSTR)lpData;
+      _tcscpy_s(szData, 16,
+                _T("XXIme"));  // for win98: less than 16*sizeof(TCHAR)
+      return TRUE;
+    } break;
+  }
+  return FALSE;
 }
 
-BOOL WINAPI ImeSelect(HIMC hImc, BOOL bSelect)
-{
-	if (NULL == hImc){
-		return TRUE;
-	}
-	ImcHandle imcHandle(hImc);
-	if(!imcHandle.IsNULL()){
-		if(bSelect){
-			imcHandle.Init();
-			imcHandle.SetActive(true);
-		}else{
-			imcHandle.SetActive(false);
-		}
-	}else{
-	}
-	return TRUE; 
+BOOL WINAPI ImeSelect(HIMC hImc, BOOL bSelect) {
+  if (NULL == hImc) {
+    return TRUE;
+  }
+  ImcHandle imcHandle(hImc);
+  if (!imcHandle.IsNULL()) {
+    if (bSelect) {
+      imcHandle.Init();
+      imcHandle.SetActive(true);
+    } else {
+      imcHandle.SetActive(false);
+    }
+  } else {
+  }
+  return TRUE;
 }
 
-BOOL WINAPI ImeSetActiveContext(HIMC hImc, BOOL bFlag)
-{
-	if (NULL == hImc) 
-	{
-		return TRUE;
-	}
-	return TRUE;
+BOOL WINAPI ImeSetActiveContext(HIMC hImc, BOOL bFlag) {
+  if (NULL == hImc) {
+    return TRUE;
+  }
+  return TRUE;
 }
 
 #define SCAN_VALID_PROCESSKEY 0x01FF0000
 #define SCAN_VALID_TOASCII 0x1FF
 #define VKEY_VALID 0xFFFF
-BOOL WINAPI ImeProcessKey(HIMC hImc, UINT unVirtKey, DWORD unScanCode, CONST LPBYTE	achKeyState)
-{
-	ImcHandle imcHandle(hImc);
-	Comp* pComp = imcHandle.GetComp();
-	LPTSTR szCompString = pComp->GetCompString();
+BOOL WINAPI ImeProcessKey(HIMC hImc,
+                          UINT unVirtKey,
+                          DWORD unScanCode,
+                          CONST LPBYTE achKeyState) {
+  ImcHandle imcHandle(hImc);
+  CompositionStringEx* pComp = imcHandle.LockComp();
+  if (NULL == pComp)
+	  return FALSE;
+
+  LPTSTR szCompString = pComp->GetCompString();
   if (unVirtKey >= 0x41 && unVirtKey <= 0x5A) {
-    return TRUE;    // ´ÓAµ½Z
+    return TRUE;  // ä»ŽAåˆ°Z
   }
-  if (_tcslen(szCompString) > 0 &&(unVirtKey == VK_RETURN || unVirtKey == VK_SPACE || unVirtKey == VK_ESCAPE)) {
-    return TRUE;  // µ±ÓÐÐ´×÷´®ÇÒµ±Ç°°´¼üÎª»Ø³µ¡¢¿Õ¸ñ»òESC
+  if (_tcslen(szCompString) > 0 &&
+      (unVirtKey == VK_RETURN || unVirtKey == VK_SPACE ||
+       unVirtKey == VK_ESCAPE)) {
+    return TRUE;  // å½“æœ‰å†™ä½œä¸²ä¸”å½“å‰æŒ‰é”®ä¸ºå›žè½¦ã€ç©ºæ ¼æˆ–ESC
   }
-	return FALSE;
+  return FALSE;
 }
 
-UINT WINAPI ImeToAsciiEx(UINT unKey, UINT unScanCode, CONST LPBYTE achKeyState, LPDWORD lpdwTransBuf, UINT fuState, HIMC hImc)
-{	
-	ImcHandle imcHandle(hImc);
-	Comp* pComp = imcHandle.GetComp();
-	LPTSTR szCompString = pComp->GetCompString();
-	COMPOSITIONSTRING& compCore = pComp->GetCore();
-	size_t ccOriginCompLen = _tcslen(szCompString);
+UINT WINAPI ImeToAsciiEx(UINT unKey,
+                         UINT unScanCode,
+                         CONST LPBYTE achKeyState,
+                         LPDWORD lpdwTransBuf,
+                         UINT fuState,
+                         HIMC hImc) {
+  ImcHandle imcHandle(hImc);
+  CompositionStringEx* pComp = imcHandle.LockComp();
+  LPTSTR szCompString = pComp->GetCompString();
+  COMPOSITIONSTRING& compCore = pComp->GetBase();
+  size_t ccOriginCompLen = _tcslen(szCompString);
 
-	if (HIWORD(unKey) >= 'a' && HIWORD(unKey) <= 'z') {
-		TCHAR szKey[2] = { HIWORD(unKey), 0 };
-		_tcscat_s(szCompString, Comp::c_MaxCompString, szKey);	// ½«×Ö·û×·¼Óµ½Ð´×÷´®
-		compCore.dwCompStrLen = (DWORD)_tcslen(szCompString);
-	}
+  if (HIWORD(unKey) >= 'a' && HIWORD(unKey) <= 'z') {
+    TCHAR szKey[2] = {HIWORD(unKey), 0};
+    _tcscat_s(szCompString, CompositionStringEx::c_MaxCompString,
+              szKey);  // å°†å­—ç¬¦è¿½åŠ åˆ°å†™ä½œä¸²
+    compCore.dwCompStrLen = (DWORD)_tcslen(szCompString);
+  }
 
   const DWORD dwBufLen = *lpdwTransBuf;
   lpdwTransBuf += sizeof(size_t) / sizeof(DWORD);
-	UINT cMsg = 0;
+  UINT cMsg = 0;
   LPTRANSMSG lpTransMsg = (LPTRANSMSG)lpdwTransBuf;
-	if(ccOriginCompLen == 0){  // Ã»ÓÐÐ´×÷´®
-		if(HIWORD(unKey) >= 'a' && HIWORD(unKey) <= 'z'){
-      lpTransMsg[0].message = WM_IME_STARTCOMPOSITION;	// ´ò¿ªÐ´×÷´°
+  if (ccOriginCompLen == 0) {  // æ²¡æœ‰å†™ä½œä¸²
+    if (HIWORD(unKey) >= 'a' && HIWORD(unKey) <= 'z') {
+      lpTransMsg[0].message = WM_IME_STARTCOMPOSITION;  // æ‰“å¼€å†™ä½œçª—
       lpTransMsg[0].wParam = 0;
       lpTransMsg[0].lParam = 0;
-			cMsg++;
+      cMsg++;
 
-      lpTransMsg[1].message = WM_IME_COMPOSITION;	// ¸üÐÂÐ´×÷´°
+      lpTransMsg[1].message = WM_IME_COMPOSITION;  // æ›´æ–°å†™ä½œçª—
       lpTransMsg[1].wParam = 0;
       lpTransMsg[1].lParam = GCS_COMPSTR | GCS_CURSORPOS | GCS_COMPATTR;
       cMsg++;
 
-      lpTransMsg[2].message = WM_IME_NOTIFY;			// ´ò¿ªºòÑ¡´°
+      lpTransMsg[2].message = WM_IME_NOTIFY;  // æ‰“å¼€å€™é€‰çª—
       lpTransMsg[2].wParam = IMN_OPENCANDIDATE;
       lpTransMsg[2].lParam = 1;
       cMsg++;
 
-      lpTransMsg[3].message = WM_IME_NOTIFY;			// ¸üÐÂºòÑ¡´°
+      lpTransMsg[3].message = WM_IME_NOTIFY;  // æ›´æ–°å€™é€‰çª—
       lpTransMsg[3].wParam = IMN_CHANGECANDIDATE;
       lpTransMsg[3].lParam = 1;
       cMsg++;
-			return cMsg;
-		}
-	}else{ // _tcslen(szCompString) > 0			// ÓÐÐ´×÷´®
-		if(HIWORD(unKey) >= 'a' && HIWORD(unKey) <= 'z'){
-      lpTransMsg[0].message = WM_IME_COMPOSITION;	// ¸üÐÂÐ´×÷´°
+      return cMsg;
+    }
+  } else {  // _tcslen(szCompString) > 0			// æœ‰å†™ä½œä¸²
+    if (HIWORD(unKey) >= 'a' && HIWORD(unKey) <= 'z') {
+      lpTransMsg[0].message = WM_IME_COMPOSITION;  // æ›´æ–°å†™ä½œçª—
       lpTransMsg[0].wParam = 0;
       lpTransMsg[0].lParam = GCS_COMPSTR | GCS_CURSORPOS | GCS_COMPATTR;
       cMsg++;
 
-      lpTransMsg[1].message = WM_IME_NOTIFY;			// ¸üÐÂºòÑ¡´°
+      lpTransMsg[1].message = WM_IME_NOTIFY;  // æ›´æ–°å€™é€‰çª—
       lpTransMsg[1].wParam = IMN_CHANGECANDIDATE;
       lpTransMsg[1].lParam = 1;
       cMsg++;
-			return cMsg;
-		}else if(HIWORD(unKey) == VK_RETURN || HIWORD(unKey) == VK_SPACE){ // »Ø³µ»ò¿Õ¸ñ
-			LPTSTR szResultString = pComp->GetResultString();
-			_tcscpy_s(szResultString, Comp::c_MaxResultString, szCompString); // ½«Ð´×÷´®¿½Èë½á¹û´®
-			compCore.dwResultStrLen = (DWORD)_tcslen(szResultString);
-			memset(szCompString, 0, sizeof(TCHAR) * Comp::c_MaxCompString);		// Çå¿ÕÐ´×÷´®
-			compCore.dwCompStrLen = 0;
+      return cMsg;
+    } else if (HIWORD(unKey) == VK_RETURN ||
+               HIWORD(unKey) == VK_SPACE) {  // å›žè½¦æˆ–ç©ºæ ¼
+      LPTSTR szResultString = pComp->GetResultString();
+      _tcscpy_s(szResultString, CompositionStringEx::c_MaxResultString,
+                szCompString);  // å°†å†™ä½œä¸²æ‹·å…¥ç»“æžœä¸²
+      compCore.dwResultStrLen = (DWORD)_tcslen(szResultString);
+      memset(
+          szCompString, 0,
+          sizeof(TCHAR) * CompositionStringEx::c_MaxCompString);  // æ¸…ç©ºå†™ä½œä¸²
+      compCore.dwCompStrLen = 0;
 
-      lpTransMsg[0].message = WM_IME_COMPOSITION;	// ¸üÐÂÐ´×÷´°
+      lpTransMsg[0].message = WM_IME_COMPOSITION;  // æ›´æ–°å†™ä½œçª—
       lpTransMsg[0].wParam = 0;
       lpTransMsg[0].lParam = GCS_COMPSTR | GCS_RESULTSTR;
-      //lpdwTransBuf += 3;
+      // lpdwTransBuf += 3;
       cMsg++;
 
-      lpTransMsg[1].message = WM_IME_ENDCOMPOSITION;	// ¹Ø±ÕÐ´×÷´°
+      lpTransMsg[1].message = WM_IME_ENDCOMPOSITION;  // å…³é—­å†™ä½œçª—
       lpTransMsg[1].wParam = 0;
       lpTransMsg[1].lParam = 0;
       cMsg++;
 
-      lpTransMsg[2].message = WM_IME_NOTIFY;				// ¹Ø±ÕºòÑ¡´°
+      lpTransMsg[2].message = WM_IME_NOTIFY;  // å…³é—­å€™é€‰çª—
       lpTransMsg[2].wParam = IMN_CLOSECANDIDATE;
       lpTransMsg[2].lParam = 1;
       cMsg++;
-			return cMsg;
-		}else if(HIWORD(unKey) == VK_ESCAPE){	// ESC
-			memset(szCompString, 0, sizeof(TCHAR) * Comp::c_MaxCompString);
-			compCore.dwCompStrLen = 0;
-      lpTransMsg[0].message = WM_IME_COMPOSITION;	// ¸üÐÂÐ´×÷´°
+      return cMsg;
+    } else if (HIWORD(unKey) == VK_ESCAPE) {  // ESC
+      memset(szCompString, 0,
+             sizeof(TCHAR) * CompositionStringEx::c_MaxCompString);
+      compCore.dwCompStrLen = 0;
+      lpTransMsg[0].message = WM_IME_COMPOSITION;  // æ›´æ–°å†™ä½œçª—
       lpTransMsg[0].wParam = 0;
       lpTransMsg[0].lParam = GCS_COMPSTR;
       cMsg++;
 
-      lpTransMsg[1].message = WM_IME_ENDCOMPOSITION;	// ¹Ø±ÕÐ´×÷´°
+      lpTransMsg[1].message = WM_IME_ENDCOMPOSITION;  // å…³é—­å†™ä½œçª—
       lpTransMsg[1].wParam = 0;
       lpTransMsg[1].lParam = 0;
       cMsg++;
 
-      lpTransMsg[2].message = WM_IME_NOTIFY;;			// ¹Ø±ÕºòÑ¡´°
+      lpTransMsg[2].message = WM_IME_NOTIFY;
+      ;  // å…³é—­å€™é€‰çª—
       lpTransMsg[2].wParam = IMN_CLOSECANDIDATE;
       lpTransMsg[2].lParam = 1;
       cMsg++;
-			return cMsg;
-		}
-	}
-	return cMsg;
+      return cMsg;
+    }
+  }
+  return cMsg;
 }
 
-BOOL WINAPI NotifyIME(HIMC hImc, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
-{
-	return TRUE;
+BOOL WINAPI NotifyIME(HIMC hImc, DWORD dwAction, DWORD dwIndex, DWORD dwValue) {
+  return TRUE;
 }
 
-BOOL WINAPI ImeRegisterWord(LPCTSTR lpszReading, DWORD dwStyle, LPCTSTR lpszString)
-{ return FALSE; }
-
-BOOL WINAPI ImeUnregisterWord(LPCTSTR lpszReading, DWORD dwStyle, LPCTSTR lpszString)
-{ return FALSE; }
-
-UINT WINAPI ImeGetRegisterWordStyle(UINT nItem, LPSTYLEBUF lpStyleBuf)
-{ return FALSE; }
-
-UINT WINAPI ImeEnumRegisterWord(REGISTERWORDENUMPROC lpfnRegisterWordEnumProc, 
-					LPCTSTR lpszReading, DWORD dwStyle, LPCTSTR lpszString, 
-					LPVOID lpData)
-{ return FALSE; }
-
-BOOL WINAPI ImeSetCompositionString(HIMC hImc, DWORD dwIndex, LPCVOID lpComp, 
-						DWORD dwCompLen, LPCVOID lpRead, DWORD dwReadLen)
-{ return FALSE; }
-
-DWORD   WINAPI ImeGetImeMenuItems(HIMC hImc, DWORD dwFlags, DWORD dwType, 
-				   LPIMEMENUITEMINFO lpImeParentMenu, 
-				   LPIMEMENUITEMINFO lpImeMenu, DWORD dwSize)
-{ return FALSE; }
-
-DWORD WINAPI ImeConversionList(HIMC hImc, LPCTSTR lpszsrc, 
-									   LPCANDIDATELIST lpCandidateList, 
-									   DWORD dwBufLen, UINT uFlag)
-{
-	return FALSE;
+BOOL WINAPI ImeRegisterWord(LPCTSTR lpszReading,
+                            DWORD dwStyle,
+                            LPCTSTR lpszString) {
+  return FALSE;
 }
 
-BOOL WINAPI ImeDestroy(UINT ureserved)
-{
-	return TRUE;
+BOOL WINAPI ImeUnregisterWord(LPCTSTR lpszReading,
+                              DWORD dwStyle,
+                              LPCTSTR lpszString) {
+  return FALSE;
 }
 
+UINT WINAPI ImeGetRegisterWordStyle(UINT nItem, LPSTYLEBUF lpStyleBuf) {
+  return FALSE;
+}
+
+UINT WINAPI ImeEnumRegisterWord(REGISTERWORDENUMPROC lpfnRegisterWordEnumProc,
+                                LPCTSTR lpszReading,
+                                DWORD dwStyle,
+                                LPCTSTR lpszString,
+                                LPVOID lpData) {
+  return FALSE;
+}
+
+BOOL WINAPI ImeSetCompositionString(HIMC hImc,
+                                    DWORD dwIndex,
+                                    LPCVOID lpComp,
+                                    DWORD dwCompLen,
+                                    LPCVOID lpRead,
+                                    DWORD dwReadLen) {
+  return FALSE;
+}
+
+DWORD WINAPI ImeGetImeMenuItems(HIMC hImc,
+                                DWORD dwFlags,
+                                DWORD dwType,
+                                LPIMEMENUITEMINFO lpImeParentMenu,
+                                LPIMEMENUITEMINFO lpImeMenu,
+                                DWORD dwSize) {
+  return FALSE;
+}
+
+DWORD WINAPI ImeConversionList(HIMC hImc,
+                               LPCTSTR lpszsrc,
+                               LPCANDIDATELIST lpCandidateList,
+                               DWORD dwBufLen,
+                               UINT uFlag) {
+  return FALSE;
+}
+
+BOOL WINAPI ImeDestroy(UINT ureserved) {
+  return TRUE;
+}

@@ -1,28 +1,34 @@
 #pragma once
-#define NOIME
-#include <windows.h>
-#include "imm.h"
-
-#define _DDKIMM_H_
+#include "CommonHeader.h"
 #include "atlbase.h"
 
-class Comp;
+class CompositionStringEx;
+class CandidateInfoEx;
 
-class ImcHandle
-{
-public:
-	ImcHandle(HIMC hImc);
-	~ImcHandle();
-	bool IsNULL();
-	void Init();
-	void SetActive(bool b);
-	bool IsActive();
-	HWND	GetMainWnd();
-	Comp* GetComp();
-	bool GetFont(LOGFONT& font) const;
-  int		GetMainWndCaretHeight();
-private:
-	INPUTCONTEXT *m_pContext;
-	HIMC m_hImc;
-	Comp*	m_pComp;
+class ImcHandle {
+ public:
+  ImcHandle(HIMC hImc);
+  ~ImcHandle();
+
+  bool IsNULL();
+  void Init();
+
+  CompositionStringEx* LockComp();
+  void UnlockComp();
+
+  CandidateInfoEx* LockCand();
+  void UnlockCand();
+
+  void SetActive(bool b);
+  bool IsActive();
+  HWND GetMainWnd();
+
+  bool GetFont(LOGFONT& font) const;
+  int GetMainWndCaretHeight();
+
+ private:
+  INPUTCONTEXT* m_pContext;
+  HIMC m_hImc;
+  CompositionStringEx* m_pComp;
+  CandidateInfoEx* m_pCand;
 };

@@ -1,0 +1,5 @@
+# http://clang.llvm.org/docs/ClangFormatStyleOptions.html
+BasedOnStyle: Chromium
+SortIncludes: false
+IndentWidth: 2
+TabWidth: 2
